@@ -1,0 +1,135 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" 
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+		<title>Java ILP - Java Interface to ILP Solvers</title>
+	</head>
+	
+	<body>
+		<h1>Java ILP - Java Interface to ILP Solvers</h1>
+		<hr/>
+		<h2>Links</h2>
+			<ul>
+				<li><a href="javadoc/index.html">Java API Reference</a></li>
+				<li><a href="https://sourceforge.net/project/showfiles.php?group_id=248629">Download</a></li>
+				<li><a href="https://sourceforge.net/projects/javailp">Project at Sourceforge.net</a></li>
+			</ul>
+		<hr/>
+		
+		<h2>Introduction</h2>
+		<p>
+		Java ILP is a java interface to integer linear programming (ILP) solvers.
+		There exist several ILP solvers, free or commercial, that offer a java interface. 
+		However, these java interfaces are mostly adapted from the c/c++ code leading to a complicated configuration with arrays, integer variables, etc.
+		In contrast, Java ILP aims to provide a simple object-oriented interface as a front-end increasing the ease of development. 
+		</p>
+		<p>
+		Java ILP is licensed under LGPL (<a href="http://www.gnu.org/copyleft/lesser.html">http://www.gnu.org/copyleft/lesser.html</a>).
+		</p>
+		<p>
+		Java ILP requires Java 5 or higher.
+		</p>
+		
+		<h2>Supported ILP Solvers</h2>
+		<ul>
+			<li><b>lp_solve</b> - free under LGPL license, available at <a href="http://lpsolve.sourceforge.net/5.5/">http://lpsolve.sourceforge.net/5.5/</a></li>
+			<li><b>ILOG CPLEX</b> - commercial, limited trial version available at <a href="http://www.ilog.com/products/cplex/">http://www.ilog.com/products/cplex/</a></li>
+			<li><b>Gurobi</b> (contribution by Fabio Genoese)- commercial, free academic version available <a href="http://www.gurobi.com/">http://www.gurobi.com/</a></li>
+			<li><b>Mosek</b> - commercial, limited trial version available at <a href="http://www.mosek.com/">http://www.mosek.com/</a></li>
+			<li><b>GLPK</b> - free under GPL, available for <a href="http://www.gnu.org/software/glpk/">linux</a> and <a href="https://sourceforge.net/projects/winglpk/">windows</a> (compatible with version 4.43 and later)</li>
+			<li><b>SAT4J</b> (restricted 0-1 ILP backtracking solver to binary variables and integer coefficients) - free under LGPL license, available at <a href="http://sat4j.org/">http://sat4j.org/</a></li>
+		    <li><b>MiniSat+</b> (restricted 0-1 ILP backtracking solver to binary variables and integer coefficients) - free under MIT license, available at <a href="http://minisat.se/MiniSat+.html">http://minisat.se/MiniSat+.html</a></li>, JNI lib is provided by Java ILP (see downloads at sourceforge)
+		</ul>
+		<p>
+		You will need the solver specific JNI <em>jar</em> file and the system dependent libraries which are <em>dll</em> files on windows and <em>so</em> files on linux.
+		The <em>jar</em> files have to be on the classpath and the libraries in the library path.
+		</p>
+		<ul>
+			<li>Information about setting the classpath: <a href="http://en.wikipedia.org/wiki/Classpath_(Java)">http://en.wikipedia.org/wiki/Classpath_(Java)</a></li>
+			<li>Information about JNI and setting the library path: <a href="http://en.wikipedia.org/wiki/Java_Native_Interface">http://en.wikipedia.org/wiki/Java_Native_Interface</a> (alternatively, copy the <em>dll</em> files to the windows/system32 folder)</li>
+		</ul>
+		<h2>Code example</h2>
+		
+		<div style="font-family:courier">
+			SolverFactory factory = new SolverFactoryLpSolve(); // use lp_solve<br />
+			factory.setParameter(Solver.VERBOSE, 0); <br />
+			factory.setParameter(Solver.TIMEOUT, 100); // set timeout to 100 seconds<br />
+			<br />
+			/**<br />
+			 * Constructing a Problem: <br />
+			 * Maximize: 143x+60y <br />
+			 * Subject to: <br />
+			 * 120x+210y &lt;= 15000 <br />
+			 * 110x+30y &lt;= 4000 <br />
+			 * x+y &lt;= 75<br />
+			 * <br />
+			 * With x,y being integers<br />
+			 * <br />
+			 */<br />
+			Problem problem = new Problem();<br />
+			<br />
+			Linear linear = new Linear();<br />
+			linear.add(143, "x");<br />
+			linear.add(60, "y");<br />
+			<br />
+			problem.setObjective(linear, OptType.MAX);<br />
+			<br />
+			linear = new Linear();<br />
+			linear.add(120, "x");<br />
+			linear.add(210, "y");<br />
+			<br />
+			problem.add(linear, "&lt;=", 15000);<br />
+			<br />
+			linear = new Linear();<br />
+			linear.add(110, "x");<br />
+			linear.add(30, "y");<br />
+			<br />
+			problem.add(linear, "&lt;=", 4000);<br />
+			<br />
+			linear = new Linear();<br />
+			linear.add(1, "x");<br />
+			linear.add(1, "y");<br />
+			<br />
+			problem.add(linear, "&lt;=", 75);<br />
+			<br />
+			problem.setVarType("x", Integer.class);<br />
+			problem.setVarType("y", Integer.class);<br />
+			<br />
+			Solver solver = factory.get(); // you should use this solver only once for one problem<br />
+			Result result = solver.solve(problem);<br />
+			<br />
+			System.out.println(result);<br />
+			<br />
+			/**<br />
+			 * Extend the problem with x &lt;= 16 and solve it again<br />
+			 */<br />
+			problem.setVarUpperBound("x", 16);<br />
+			<br />
+			solver = factory.get();<br />
+			result = solver.solve(problem);<br />
+			<br />
+			System.out.println(result);<br />
+		</div>
+		<p>Results in the following output:</p>
+		<div style="font-family:courier">
+			Objective: 6266.0 {y=52, x=22}<br />
+			Objective: 5828.0 {y=59, x=16}<br />
+		</div>
+		<h2>Documentation</h2>
+		<p>Read the <a href="javadoc/index.html">Java API Reference</a>.</p>
+
+		<hr />
+		Copyright 2008, Martin Lukasiewycz
+	<script type="text/javascript">
+		var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+		document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+	</script>
+	<script type="text/javascript">
+		try {
+		var pageTracker = _gat._getTracker("UA-6799601-1");
+		pageTracker._trackPageview();
+		} catch(err) {}
+	</script>
+	</body>
+</html>
